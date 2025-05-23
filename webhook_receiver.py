@@ -130,27 +130,48 @@ def generate_optimization_suggestions(strategy_name):
 
 def generate_pine_script(strategy_name, suggestion_type, parameters):
     """Generate a Pine Script file with suggested parameters"""
-    # Load template Pine Script
-    template_file = "solana_ce_zlsma_strategy_webhook_enabled_fixed.pine"
-    if not os.path.exists(template_file):
-        # Create a basic template if the file doesn't exist
-        with open(template_file, 'w') as f:
-            f.write("// TradingView Pine Script Template\n")
-            f.write("// This is a placeholder. Replace with your actual strategy code.\n")
+    # Use a string template instead of trying to read a file
+    pine_script_template = """// TradingView Pine Script Template
+// Optimized parameters for {strategy_name} - {suggestion_type}
+// Generated on {date}
+
+//@version=5
+strategy("{strategy_name} - {suggestion_type}", overlay=true)
+
+// Input parameters
+takeProfit = {take_profit} // Optimized
+stopLoss = {stop_loss} // Optimized
+trailingStopPct = {trailing_stop} // Optimized
+trailingActivationThreshold = {trailing_activation} // Optimized
+
+// Your strategy logic goes here
+// This is a placeholder template
+
+// Example entry condition
+longCondition = ta.crossover(ta.sma(close, 14), ta.sma(close, 28))
+if (longCondition)
+    strategy.entry("Long", strategy.long)
     
-    with open(template_file, 'r') as f:
-        pine_script = f.read()
+// Example exit with optimized parameters
+strategy.exit("TP/SL", "Long", profit=takeProfit, loss=stopLoss, trail_points=trailingStopPct, trail_offset=trailingActivationThreshold)
+"""
     
-    # Replace parameter values in the script
-    # This is a simplified example - you'll need to adapt this to your actual script structure
-    for param_name, param_value in parameters.items():
-        # Example: replace "takeProfit = 5.0" with "takeProfit = 7.5"
-        pine_script = pine_script.replace(f"{param_name} = ", f"{param_name} = {param_value} // Optimized: ")
+    # Format the template with parameters
+    formatted_script = pine_script_template.format(
+        strategy_name=strategy_name,
+        suggestion_type=suggestion_type,
+        date=datetime.datetime.now().strftime("%Y-%m-%d"),
+        take_profit=parameters.get('take_profit', 5.0),
+        stop_loss=parameters.get('stop_loss', 3.0),
+        trailing_stop=parameters.get('trailing_stop', 1.0),
+        trailing_activation=parameters.get('trailing_activation', 0.5)
+    )
     
-    # Save the new script
+    # Save the new script to the optimization_results directory
+    os.makedirs('optimization_results', exist_ok=True)
     output_file = f"optimization_results/{strategy_name}_{suggestion_type}_suggested.pine"
     with open(output_file, 'w') as f:
-        f.write(pine_script)
+        f.write(formatted_script)
 
 def generate_visualization(strategy_name, df):
     """Generate visualization of parameter impact on performance"""

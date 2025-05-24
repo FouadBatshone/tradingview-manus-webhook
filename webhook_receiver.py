@@ -2,8 +2,10 @@ from flask import Flask, request, jsonify
 import os
 import json
 import datetime
+from flask_cors import CORS  # Added for CORS support
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 @app.route('/')
 def home():
@@ -16,30 +18,32 @@ def webhook():
         data = request.json
         
         # Validate required fields
-        if not data or 'strategy_name' not in data:
-            return jsonify({"status": "error", "message": "Invalid webhook format"}), 400
-        
-        # Extract data
-        strategy_name = data['strategy_name']
-        metrics = data.get('metrics', {})
-        parameters = data.get('parameters', {})
-        
-        # Create timestamp
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # Log the received data
-        print(f"Received webhook for {strategy_name} with metrics: {metrics} and parameters: {parameters}")
+        if not data:
+            return jsonify({"status": "error", "message": "No data received"}), 400
+            
+        print(f"Webhook received with data: {data}")
         
         return jsonify({
             "status": "success", 
             "message": "Webhook received and processed",
-            "timestamp": timestamp,
-            "strategy": strategy_name
+            "timestamp": datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         }), 200
     
     except Exception as e:
         print(f"Error processing webhook: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+# Simple test endpoint that accepts both GET and POST
+@app.route('/test', methods=['GET', 'POST'])
+def test():
+    print("Test endpoint hit!")
+    if request.method == 'POST':
+        try:
+            data = request.json
+            print(f"Test endpoint received POST data: {data}")
+        except:
+            print("Test endpoint received POST but no JSON data")
+    return "Test endpoint successful", 200
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
